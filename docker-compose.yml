@@ -1,0 +1,13 @@
+services:
+  uc-intg-pjlink:
+    build: .
+    container_name: uc-intg-pjlink
+    # Host networking is required so the remote can discover the
+    # integration via mDNS and reach the WebSocket port directly.
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - ./config:/config
+    environment:
+      - UC_CONFIG_HOME=/config
+      - UC_INTEGRATION_HTTP_PORT=9084

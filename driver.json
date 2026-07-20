@@ -1,0 +1,82 @@
+{
+  "driver_id": "uc_pjlink_driver",
+  "version": "1.0.0",
+  "release_date": "2026-07-20",
+  "min_core_api": "1.0.0",
+  "name": {
+    "en": "PJLink Projector",
+    "de": "PJLink Projektor"
+  },
+  "description": {
+    "en": "Control network projectors via the PJLink protocol (Acer, Epson, BenQ, NEC, Sony, Panasonic, Optoma, ViewSonic, Christie and many more).",
+    "de": "Steuere Netzwerk-Projektoren über das PJLink-Protokoll (Acer, Epson, BenQ, NEC, Sony, Panasonic, Optoma, ViewSonic, Christie und viele mehr)."
+  },
+  "port": 9084,
+  "developer": {
+    "name": "mabikus",
+    "email": "heimersheimer@googlemail.com",
+    "url": "https://github.com/mabikus/uc-intg-pjlink"
+  },
+  "home_page": "https://github.com/mabikus/uc-intg-pjlink",
+  "setup_data_schema": {
+    "title": {
+      "en": "PJLink Projector Setup",
+      "de": "PJLink Projektor einrichten"
+    },
+    "settings": [
+      {
+        "id": "info",
+        "label": {
+          "en": "Connection",
+          "de": "Verbindung"
+        },
+        "field": {
+          "label": {
+            "value": {
+              "en": "Enter the IP address of your PJLink compatible projector. Make sure network standby / LAN control is enabled on the projector.",
+              "de": "Gib die IP-Adresse deines PJLink-kompatiblen Projektors ein. Stelle sicher, dass Netzwerk-Standby / LAN-Steuerung am Projektor aktiviert ist."
+            }
+          }
+        }
+      },
+      {
+        "id": "address",
+        "label": {
+          "en": "IP address",
+          "de": "IP-Adresse"
+        },
+        "field": {
+          "text": {
+            "value": ""
+          }
+        }
+      },
+      {
+        "id": "port",
+        "label": {
+          "en": "Port",
+          "de": "Port"
+        },
+        "field": {
+          "number": {
+            "value": 4352,
+            "min": 1,
+            "max": 65535
+          }
+        }
+      },
+      {
+        "id": "password",
+        "label": {
+          "en": "PJLink password (leave empty if not set)",
+          "de": "PJLink-Passwort (leer lassen, wenn nicht gesetzt)"
+        },
+        "field": {
+          "password": {
+            "value": ""
+          }
+        }
+      }
+    ]
+  }
+}

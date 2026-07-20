@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+config/
+pjlink_config.json
+.DS_Store
