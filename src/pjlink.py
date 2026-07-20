@@ -98,14 +98,28 @@ class PJLinkClient:
         Connection and authentication errors are raised.
         """
         async with self._lock:
-            return await asyncio.wait_for(self._transaction(commands), self.timeout * (len(commands) + 1))
+            # Some projectors (e.g. Acer) refuse rapid successive TCP
+            # connections, so retry connection-level failures with a backoff.
+            last_err: Exception | None = None
+            for attempt in range(3):
+                try:
+                    return await asyncio.wait_for(
+                        self._transaction(commands), self.timeout * (len(commands) + 1)
+                    )
+                except PJLinkError:
+                    raise
+                except (OSError, ConnectionError, asyncio.TimeoutError, asyncio.IncompleteReadError) as err:
+                    last_err = err
+                    await asyncio.sleep(0.4 * (attempt + 1))
+            raise ConnectionError(f"PJLink connection failed: {last_err}") from last_err
 
     async def _transaction(self, commands: list[tuple]) -> list:
         reader, writer = await asyncio.wait_for(
             asyncio.open_connection(self.host, self.port), self.timeout
         )
         try:
-            greeting = (await asyncio.wait_for(reader.readuntil(b"\r"), self.timeout)).decode().strip()
+            # NUL stripping: some projectors (e.g. Acer) append \x00 after responses
+            greeting = (await asyncio.wait_for(reader.readuntil(b"\r"), self.timeout)).replace(b"\x00", b"").decode().strip()
 
             auth_prefix = ""
             if greeting.upper().startswith("PJLINK 1 "):
@@ -126,7 +140,7 @@ class PJLinkClient:
                 writer.write(f"{prefix}%{pj_class}{cmd} {param}\r".encode())
                 await writer.drain()
 
-                line = (await asyncio.wait_for(reader.readuntil(b"\r"), self.timeout)).decode().strip()
+                line = (await asyncio.wait_for(reader.readuntil(b"\r"), self.timeout)).replace(b"\x00", b"").decode().strip()
                 if "ERRA" in line.upper() and line.upper().startswith("PJLINK"):
                     raise PJLinkError("ERRA")
                 if "=" not in line:
@@ -160,13 +174,19 @@ class PJLinkClient:
             pass
 
         inst = await self.command("INST", "?")
+        codes = inst.split()
+
+        # Query all input names over a single connection - some projectors
+        # refuse rapid successive connections
+        names: list = []
+        if clss >= 2 and codes:
+            try:
+                names = await self.transaction([("INNM", f"?{code}", 2) for code in codes])
+            except (PJLinkError, OSError, ConnectionError, asyncio.TimeoutError):
+                names = []
+
         inputs = []
-        for code in inst.split():
-            name = input_name(code)
-            if clss >= 2:
-                try:
-                    name = await self.command("INNM", f"?{code}", 2) or name
-                except PJLinkError:
-                    pass
+        for i, code in enumerate(codes):
+            name = names[i] if i < len(names) and isinstance(names[i], str) and names[i] else input_name(code)
             inputs.append({"id": code, "name": name})
         return inputs
